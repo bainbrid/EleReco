@@ -1,0 +1,15 @@
+cmsDriver.py \
+    --step RAW2DIGI,RECO,RECOSIM \
+    --filein ${FILEIN} \
+    --fileout ${FILEOUT}.root \
+    --python_filename ${FILEOUT}_cfg.py \
+    --mc \
+    --geometry DB:Extended \
+    --era Run2_2017 \
+    --conditions 94X_mc2017_realistic_v12 \
+    --eventcontent RECOSIM \
+    --datatier RECOSIM \
+    --customise Configuration/DataProcessing/Utils.addMonitoring \
+    --nThreads 1 \
+    --number 10 \
+    --no_exec
