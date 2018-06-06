@@ -4,16 +4,20 @@ from EleReco.Ntuplizer.files_RERECO import *
 
 process = cms.Process("Ntuplizer")
 
-sample = 0 #@@ choose here
+options = VarParsing.VarParsing('analysis')
+process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
+options.parseArguments()
+
+sample = 0 #@@ choose preexisting samples here
 
 files = [
-    ['root://cms-xrd-global.cern.ch//store/user/tstreble/BToKee_Pythia/BToKee_Pythia_AODSIM_18_03_22/180321_162718/0000/BToKee_AODSIM_246.root'],
+    options.inputFiles,
     BToKee_2GeV,
     BToKee_1GeV,
     BToKee_0p5GeV,
     BToKmm_0p5GeV,
     ][sample]
-output = ['output.root',
+output = [options.outputFile,
           'output_BToKee_2GeV.root',
           'output_BToKee_1GeV.root',
           'output_BToKee_0p5GeV.root',
@@ -25,14 +29,9 @@ process.source = cms.Source("PoolSource",
                             )
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(10)
+    input = cms.untracked.int32(options.maxEvents)
 )
 
-options = VarParsing.VarParsing('analysis')
-process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
-options.parseArguments()
-
-#process.dummy = cms.EDAnalyzer("NonAnalyzer")
 process.load('EleReco.Ntuplizer.LowPtEleNtuplizer_cfi')
 process.p = cms.Path(process.LowPtEleNtuplizer)
 
