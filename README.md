@@ -81,6 +81,7 @@ cmsrel CMSSW_9_4_8
 cd CMSSW_9_4_8/src
 cmsenv
 git cms-init
+git remote add ICBPHCMS git@github.com:ICBPHCMS/cmssw.git
 git cms-merge-topic ICBPHCMS:from-CMSSW_9_4_8-EleReco-Seed1p0
 git clone git@github.com:ICBPHCMS/EleReco.git
 cd EleReco
