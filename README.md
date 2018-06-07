@@ -101,9 +101,8 @@ FILEIN=root://gfe02.grid.hep.ph.ic.ac.uk:1097//store/user/tstreble/BToKee_Pythia
 FILEOUT=EleReco_Seed1p0
 . cmsDriver.sh
 cmsRun ${FILEOUT}_cfg.py
-
-# produce RERECO sample via crab (to come)
-python crab.py
+# produce RERECO sample via crab
+python crab.py --name=${FILEOUT} --instance="phys03" --dataset="/BToKee_Pythia/tstreble-BToKee_Pythia_PUMix_18_03_18-c9b9e020b5bce5ee6bee9ef5f38c415a/USER"
 ```
 
 ##### Run ntuplizer step
