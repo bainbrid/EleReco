@@ -61,7 +61,7 @@ python crab.py
 
 ```
 cd ../../test/
-cmsRun LowPtEleNtuplizer_cfg.py inputFiles=file:../scripts/crab/EleReco_Seed2p0.root outputFile=output.root maxEvents=10
+cmsRun LowPtEleNtuplizer_cfg.py inputFiles=file:../scripts/crab/EleReco-Seed2p0.root outputFile=output.root maxEvents=10
 ```
 
 ##### Run plotting script
@@ -109,7 +109,7 @@ python crab.py --name=${FILEOUT} --instance="phys03" --dataset="/BToKee_Pythia/t
 
 ```
 cd ../../test/
-cmsRun LowPtEleNtuplizer_cfg.py inputFiles=file:../scripts/crab/EleReco_Seed1p0.root outputFile=output.root maxEvents=10
+cmsRun LowPtEleNtuplizer_cfg.py inputFiles=file:../scripts/crab/EleReco-Seed1p0.root outputFile=output.root maxEvents=10
 ```
 
 ##### Run plotting script
