@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 import FWCore.ParameterSet.VarParsing as VarParsing
 from EleReco.Ntuplizer.files_RERECO import *
-
+>
 process = cms.Process("Ntuplizer")
 
 options = VarParsing.VarParsing('analysis')
@@ -32,8 +32,8 @@ process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(options.maxEvents)
 )
 
-process.load('EleReco.Ntuplizer.LowPtEleNtuplizer_cfi')
-process.p = cms.Path(process.LowPtEleNtuplizer)
+process.load('EleReco.Ntuplizer.lowPtEleNtuplizer_cfi')
+process.p = cms.Path(process.lowPtEleNtuplizer)
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # silence output

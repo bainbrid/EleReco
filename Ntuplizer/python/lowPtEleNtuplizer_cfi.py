@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-LowPtEleNtuplizer = cms.EDAnalyzer("LowPtEleNtuplizer",
+lowPtEleNtuplizer = cms.EDAnalyzer("LowPtEleNtuplizer",
                                    hepMCProductLabel = cms.InputTag("generatorSmeared"),
                                    genParticlesLabel = cms.InputTag("genParticles"),
                                    generalTracksLabel = cms.InputTag("generalTracks"),
