@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 import FWCore.ParameterSet.VarParsing as VarParsing
 from EleReco.Ntuplizer.files_RERECO import *
->
+
 process = cms.Process("Ntuplizer")
 
 options = VarParsing.VarParsing('analysis')
