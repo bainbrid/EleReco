@@ -6,6 +6,7 @@ from math import sqrt
 import numpy as np
 import numpy.ma as ma
 import re
+from collections import OrderedDict as odict
 
 ################################################################################
 # 
@@ -136,7 +137,7 @@ class Analysis(object) :
         import os
         import datetime
         if os.path.isdir("plots") : 
-            name = "plots_backup_"+datetime.datetime.now().strftime("%y%m%d_%H%M")
+            name = "plots_backup/plots_backup_"+datetime.datetime.now().strftime("%y%m%d_%H%M")
             print "'plots' directory exists! renaming to '{:s}'".format(name)
             os.rename("plots",name)
         os.makedirs("plots")
@@ -146,7 +147,7 @@ class Analysis(object) :
         for tree in self.trees : string += tree.__str__()
         return string
 
-    def eff(self,
+    def effs_compare_collections(self,
             dir="plots",
             verbose=False,
             ) :
@@ -163,14 +164,15 @@ class Analysis(object) :
         effs_pt = []
         effs_eta = []
         for gen,reco in [("genMuons","genTrks"),
-                         ("genKaons","genTrks"),
+                         #("genKaons","genTrks"),
                          ("genEles","genTrks"),
                          ("genEles","gsfTrks"),
                          #("genEles","gsfElectrons"), #@@ ADD THIS!!! NEEDS NEW NTUPLES!!! 
+                         ("genEles","gsfEles"), #@@ ADD THIS!!! NEEDS NEW NTUPLES!!! 
                          ] :
 
             # just use 2GeV sample for now
-            tree = filter( lambda x : "2GeV" in x[0], zip(self.filenames,self.trees) )[0][1]
+            tree = filter( lambda x : "0p5" in x[0], zip(self.filenames,self.trees) )[0][1]
 
             effs_pt.append(r.TEfficiency("pt_{:s}_{:s}".format(gen,reco),"",len(binning)-1,binning))
             effs_eta.append(r.TEfficiency("eta_{:s}_{:s}".format(gen,reco),"",50,-2.5,2.5))
@@ -179,7 +181,7 @@ class Analysis(object) :
             idxs = tree.getter("{:s}_{:s}_Idx".format(gen,reco))
             drs = tree.getter("{:s}_{:s}_DR".format(gen,reco))
             for pt,eta,idx,dr in zip(pts,etas,idxs,drs) :
-                matched = (idx >= 0) and (dr < 0.01)
+                matched = (idx >= 0) and (dr < 0.02)
                 effs_pt[-1].Fill(True if matched else False, pt)
                 effs_eta[-1].Fill(True if matched else False, eta)
 
@@ -194,8 +196,8 @@ class Analysis(object) :
                 r.gStyle.SetOptStat(0)
                 eff.SetTitle(";p^{gen}_{T} [GeV];Efficency")
                 eff.GetPaintedGraph().GetYaxis().SetNdivisions(510)
-                eff.GetPaintedGraph().GetYaxis().SetRangeUser(0.,1.)
-                eff.GetPaintedGraph().GetXaxis().SetRangeUser(0.001,1000.)
+                eff.GetPaintedGraph().GetYaxis().SetRangeUser(0.001,1.)
+                eff.GetPaintedGraph().GetXaxis().SetRangeUser(0.001,10.)
             eff.SetMarkerColor(colors[ieff])
             eff.SetMarkerStyle(styles[ieff])
             eff.SetMarkerSize(sizes[ieff])
@@ -204,6 +206,7 @@ class Analysis(object) :
             legend.AddEntry(eff,eff.GetName(),"pl")
         legend.SetTextSize(0.025)
         legend.Draw("same")
+        c.SetLogy(1)
         c.SaveAs("plots/efficiency_pt.pdf")
         for eff in effs_pt : del eff
         del c
@@ -253,19 +256,19 @@ class Analysis(object) :
         pickle.dump(efficiencies,file)
         file.close()
 
-    def effs(self,
+    def effs_compare_thresholds(self,
              dir="plots",
              verbose=False,
              ) :
 
         # util
         setTDRStyle()
-        colors = [r.kBlue,r.kRed,r.kGreen,r.kOrange]
+        colors = [r.kBlue,r.kGreen,r.kRed,r.kOrange]
         styles = [20,20,20,20]
         sizes = [1.8,1.6,1.4,1.2]
 
         # find "_Idx" branches that are denominators of eff plots 
-        filters=["gen(.*)_Idx"] 
+        filters=["genEles(.*)_Idx"] 
         all_branches = list(set([ branch for tree in self.trees for branch in tree.branches ]))
         all_branches = [ b for b in all_branches for f in filters if len(re.findall(f,b)) > 0 ]
 
@@ -283,7 +286,7 @@ class Analysis(object) :
                              tree.getter(branch),
                              tree.getter(branch.replace("_Idx","_DR")))
                 for ii,(gen_pt,reco_pt,idx,dr) in enumerate(values) : 
-                    matched = (idx >= 0) and (dr < 0.05)
+                    matched = (idx >= 0) and (dr < 0.02)
                     #if ii < 10 : print "idx",idx,"  dr",dr,"  matched",matched,"  gen_pt",gen_pt,"  reco_pt",reco_pt
                     effs[-1].Fill(True if matched else False, gen_pt)
 
@@ -313,12 +316,209 @@ class Analysis(object) :
             for eff in effs : del eff
             del c
 
-    def plot(self,
+    def effs_compare_thresholds_2(self,
+             dir="plots",
+             verbose=False,
+             ) :
+
+        #@@ ADD ETA DEPENDENCE! 
+
+        binning = np.append(np.logspace(-3.0, 1.0, 40, endpoint=False),
+                            np.logspace( 1.0, 3.0, 2))
+
+        # util
+        setTDRStyle()
+        colors = [r.kBlue,r.kGreen,r.kRed,r.kOrange]
+        styles = [20,20,20,20]
+        sizes = [1.8,1.6,1.4,1.2]
+
+        # find "_Idx" branches that are denominators of eff plots 
+        filters=["genEles_(.*)_Idx"] 
+        all_branches = list(set([ branch for tree in self.trees for branch in tree.branches ]))
+        all_branches = [ b for b in all_branches for f in filters if len(re.findall(f,b)) > 0 ]
+
+        # separate plot for each branch 
+        all_effs_pt = []
+        for branch in all_branches : 
+
+            # create TEff objects from different trees 
+            effs_pt = []
+            for itree,tree in enumerate(self.trees) :
+                collection = branch.replace("_Idx","") # e.g. genEles_gsfEles_Idx
+                threshold = tree.filename.split("_")[-1].replace(".root","") # e.g. "output_BToKee_Seed2p0.root"
+                effs_pt.append(r.TEfficiency("pt_{:s}_{:s}".format(collection,threshold),
+                                             "",
+                                             len(binning)-1,binning))
+                all_effs_pt.append(effs_pt[-1])
+
+                # pt,idx,dr values for gen eles/muons 
+                values = zip(tree.getter(branch.split("_")[0]+"_Pt"), # genXXX_Pt
+                             tree.getter(branch.split("_")[1]+"_Pt"), # recoXXX_Pt
+                             tree.getter(branch), # genXXX_recoXXX_Idx
+                             tree.getter(branch.replace("_Idx","_DR"))) # genXXX_recoXXX_DR
+                for ii,(gen_pt,reco_pt,idx,dr) in enumerate(values) : 
+                    matched = (idx >= 0) and (dr < 0.02)
+                    #if ii < 10 : print "idx",idx,"  dr",dr,"  matched",matched,"  gen_pt",gen_pt,"  reco_pt",reco_pt
+                    effs_pt[-1].Fill(True if matched else False, gen_pt)
+
+            # create plot that compares eff curves 
+            c = r.TCanvas()
+            c.SetLogx(1)
+            c.SetLogy(1)
+            legend = r.TLegend(0.7,0.5-0.04*len(effs_pt),0.9,0.5)
+            for ieff,eff in enumerate(effs_pt) :
+                eff.Draw("" if ieff == 0 else "same")
+                r.gPad.Update()
+                if ieff == 0 : 
+                    r.gStyle.SetOptStat(0)
+                    eff.SetTitle(";p^{gen}_{T} [GeV];Efficency")
+                    eff.GetPaintedGraph().GetYaxis().SetNdivisions(510)
+                    eff.GetPaintedGraph().GetYaxis().SetRangeUser(0.001,1.)
+                    eff.GetPaintedGraph().GetXaxis().SetRangeUser(0.001,10.)
+                eff.SetMarkerColor(colors[ieff])
+                eff.SetMarkerStyle(styles[ieff])
+                eff.SetMarkerSize(sizes[ieff])
+                eff.SetLineColor(colors[ieff])
+                c.Update()
+                legend.AddEntry(eff,eff.GetName().split("_")[-1],"pl")
+            legend.SetTextSize(0.025)
+            legend.Draw("same")
+            name = "eff_"+branch
+            c.SaveAs("plots/"+name+".pdf")
+            for eff in effs_pt : del eff
+            del c
+
+        efficiencies = {}
+        for eff in all_effs_pt :
+            keys = []
+            vals = []
+            numer = eff.GetCopyPassedHisto()
+            denom = eff.GetCopyTotalHisto()
+            for bin in range(1,numer.GetXaxis().GetNbins()+1) :
+                k = numer.GetBinLowEdge(bin)
+                n = numer.GetBinContent(bin)
+                d = denom.GetBinContent(bin)
+                v = float(n)/float(d) if d>0 else 0.
+                keys.append(k)
+                vals.append(v)
+            #efficiencies[eff.GetName()] = zip(keys,vals) # [(k,v),(),...]
+            efficiencies[eff.GetName()] = (keys,vals) #([],[])
+        import pickle 
+        file = open('effs.pkl','wb')
+        pickle.dump(efficiencies,file)
+        file.close()
+
+    def effs_compare_thresholds_3(self,
+             dir="plots",
+             verbose=False,
+             ) :
+
+        #@@ ADD ETA DEPENDENCE! 
+        
+        eta_bins = odict([("all",(0.,2.5)),
+                          ("0p0",(0.,0.8)),
+                          ("0p8",(0.8,1.442)),
+                          ("1p4",(1.442,2.0)),
+                          #("1p4",(1.442,1.556)),("1p6",(1.556,2.0)),
+                          ("2p0",(2.0,2.5)),
+                          ])
+
+        binning = np.append(np.logspace(-3.0, 1.0, 40, endpoint=False),
+                            np.logspace( 1.0, 3.0, 2))
+
+        # util
+        setTDRStyle()
+        colors = [r.kBlue,r.kGreen,r.kRed,r.kOrange]
+        styles = [20,20,20,20]
+        sizes = [1.8,1.6,1.4,1.2]
+
+        # find "_Idx" branches that are denominators of eff plots 
+        filters=["genEles_(.*)_Idx"] 
+        all_branches = list(set([ branch for tree in self.trees for branch in tree.branches ]))
+        all_branches = [ b for b in all_branches for f in filters if len(re.findall(f,b)) > 0 ]
+
+        # separate plot for each branch 
+        all_effs_pt = []
+        for branch in all_branches : 
+
+            for suffix,(eta_low,eta_high) in eta_bins.items() :
+
+                # create TEff objects from different trees 
+                effs_pt = []
+                for itree,tree in enumerate(self.trees) :
+                    collection = branch.replace("_Idx","") # e.g. genEles_gsfEles_Idx
+                    threshold = tree.filename.split("_")[-1].replace(".root","") # e.g. "output_BToKee_Seed2p0.root"
+                    effs_pt.append(r.TEfficiency("pt_{:s}_eta{:s}_{:s}".format(collection,suffix,threshold),
+                                                 "",
+                                                 len(binning)-1,binning))
+                    all_effs_pt.append(effs_pt[-1])
+
+                    # pt,idx,dr values for gen eles/muons 
+                    values = zip(tree.getter(branch.split("_")[0]+"_Pt"), # genXXX_Pt
+                                 tree.getter(branch.split("_")[0]+"_Eta"), # genXXX_Eta
+                                 tree.getter(branch.split("_")[1]+"_Pt"), # recoXXX_Pt
+                                 tree.getter(branch), # genXXX_recoXXX_Idx
+                                 tree.getter(branch.replace("_Idx","_DR"))) # genXXX_recoXXX_DR
+                    for ii,(gen_pt,gen_eta,reco_pt,idx,dr) in enumerate(values) : 
+                        matched = (idx >= 0) and (dr < 0.02)
+                        # if ii < 10 : print "idx",idx,"  dr",dr,"  matched",matched,"  gen_pt",gen_pt,"  reco_pt",reco_pt
+                        if abs(gen_eta) > eta_low and abs(gen_eta) < eta_high : 
+                        #if gen_eta > eta_low and gen_eta < eta_high : 
+                            effs_pt[-1].Fill(True if matched else False, gen_pt)
+
+                # create plot that compares eff curves 
+                c = r.TCanvas()
+                c.SetLogx(1)
+                c.SetLogy(1)
+                legend = r.TLegend(0.7,0.5-0.04*len(effs_pt),0.9,0.5)
+                for ieff,eff in enumerate(effs_pt) :
+                    eff.Draw("" if ieff == 0 else "same")
+                    r.gPad.Update()
+                    if ieff == 0 : 
+                        r.gStyle.SetOptStat(0)
+                        eff.SetTitle(";p^{gen}_{T} [GeV];Efficency")
+                        eff.GetPaintedGraph().GetYaxis().SetNdivisions(510)
+                        eff.GetPaintedGraph().GetYaxis().SetRangeUser(0.001,1.)
+                        eff.GetPaintedGraph().GetXaxis().SetRangeUser(0.001,10.)
+                    eff.SetMarkerColor(colors[ieff])
+                    eff.SetMarkerStyle(styles[ieff])
+                    eff.SetMarkerSize(sizes[ieff])
+                    eff.SetLineColor(colors[ieff])
+                    c.Update()
+                    legend.AddEntry(eff,eff.GetName().split("_")[-1],"pl")
+                legend.SetTextSize(0.025)
+                legend.Draw("same")
+                name = "eff_{:s}_{:s}".format(branch.replace("_Idx",""),suffix)
+                c.SaveAs("plots/"+name+".pdf")
+                for eff in effs_pt : del eff
+                del c
+
+        efficiencies = {}
+        for eff in all_effs_pt :
+            keys = []
+            vals = []
+            numer = eff.GetCopyPassedHisto()
+            denom = eff.GetCopyTotalHisto()
+            for bin in range(1,numer.GetXaxis().GetNbins()+1) :
+                k = numer.GetBinLowEdge(bin)
+                n = numer.GetBinContent(bin)
+                d = denom.GetBinContent(bin)
+                v = float(n)/float(d) if d>0 else 0.
+                keys.append(k)
+                vals.append(v)
+            #efficiencies[eff.GetName()] = zip(keys,vals) # [(k,v),(),...]
+            efficiencies[eff.GetName()] = (keys,vals) #([],[])
+        import pickle 
+        file = open('effs.pkl','wb')
+        pickle.dump(efficiencies,file)
+        file.close()
+
+    def vars_compare_thresholds(self,
              dir="plots",
              norm=False,
              logy=True,
              verbose=False,
-             filters=[],#["bd_(.*)(?!reco)(.*)_pt"]
+             filters=["genEle(.*)"], #["bd_(.*)(?!reco)(.*)_pt"]
              ) :
 
         # util
@@ -451,15 +651,25 @@ class Analysis(object) :
 if __name__ == '__main__' :
 
     files = [
-        "output_BToKee_2GeV.root",
-        # "output_BToKee_1GeV.root",
-        # "output_BToKee_0p5GeV.root",
+        #"./data/output_BToKmm_Seed0p5.root",
+        "./data/output_BToKee_Gsf0p5.root",
+        "./data/output_BToKee_Seed0p5.root",
+        "./data/output_BToKee_Seed1p0.root",
+        "./data/output_BToKee_Seed2p0.root",
         ]
     
     a = Analysis(files)
-    # print a 
-    # for tree in a.trees : tree.acceptance(); print 
+    print a
+    #for tree in a.trees : tree.acceptance(); print 
 
-    # a.plot() # comparisom plots of several variables from different RERECOs (with diff threholds)
-    # a.effs() # plots efficiencies for different RERECOs vs gen pT
-    # a.eff() # plots efficiencies for different RECO objects vs log of gen pT (for first input file only), and creates effs.pkl file 
+    # comparison plots of several variables from RERECOs with different thresholds
+    #a.vars_compare_thresholds() 
+
+    # plots efficiencies for different RECO collections vs log of gen pT 
+    # (for first input file only)
+    # creates effs.pkl file 
+    #a.effs_compare_collections() 
+
+    # plots efficiencies for RERECOs with different thresholds vs gen pT
+    #a.effs_compare_thresholds() 
+    a.effs_compare_thresholds_3() 
