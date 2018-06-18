@@ -1,14 +1,16 @@
-<use name="FWCore/Framework"/>
-<use name="FWCore/ParameterSet"/>
-<use name="FWCore/ServiceRegistry"/>
-<use name="FWCore/Utilities"/>
-<use name="FWCore/PluginManager"/>
-<use name="CommonTools/UtilAlgos"/>
-<use name="DataFormats/HepMCCandidate"/>
-<use name="DataFormats/TrackReco"/>
-<use name="DataFormats/GsfTrackReco"/>
-<use name="DataFormats/EgammaCandidates"/>
-<use name="DataFormats/MuonReco"/>
-<use name="DataFormats/RecoCandidate"/>
-<use name="SimDataFormats/GeneratorProducts"/>
-<flags EDM_PLUGIN="1"/>
+<library name="EleRecoNtuplizerPlugins" file="LowPtEleNtuplizer.cc">
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="DataFormats/EgammaCandidates"/>
+  <use name="DataFormats/GsfTrackReco"/>
+  <use name="DataFormats/HepMCCandidate"/>
+  <use name="DataFormats/MuonReco"/>
+  <use name="DataFormats/RecoCandidate"/>
+  <use name="DataFormats/TrackReco"/>
+  <use name="FWCore/Framework"/>
+  <use name="FWCore/ParameterSet"/>
+  <!--<use name="FWCore/PluginManager"/>-->
+  <use name="FWCore/ServiceRegistry"/>
+  <use name="FWCore/Utilities"/>
+  <use name="SimDataFormats/GeneratorProducts"/>
+  <flags EDM_PLUGIN="1"/>
+</library>
