@@ -1,34 +1,28 @@
 #ifndef LOWPTELENTUPLIZER_H
 #define LOWPTELENTUPLIZER_H
 
-#include "FWCore/Framework/interface/EDAnalyzer.h"
-#include <FWCore/Framework/interface/Frameworkfwd.h>
-#include <FWCore/Framework/interface/Event.h>
-#include <FWCore/Framework/interface/ESHandle.h>
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include <FWCore/Utilities/interface/InputTag.h>
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
-#include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/TrackReco/interface/TrackBase.h"
-#include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
+#include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/RecoCandidate/interface/RecoCandidate.h"
+#include "DataFormats/TrackReco/interface/Track.h"
+#include "DataFormats/TrackReco/interface/TrackBase.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include <FWCore/Framework/interface/MakerMacros.h>
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/Utilities/interface/InputTag.h"
 #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
+#include <cmath>
+#include <iostream>
+#include <string>
 #include <TNtuple.h>
 #include <vector>
-#include <string>
-#include <iostream>
-
-#include <cmath>
-//#include <algorithm>
-//#include <map>
-//#include <utility>
-//#include <TNtuple.h>
-//#include <TString.h>
-//#include <bitset>
 
 /*******************************************************************************
  * Class declaration 
@@ -872,7 +866,6 @@ void LowPtEleNtuplizer::analyze(const edm::Event& iEvent,
   
 }
 
-#include <FWCore/Framework/interface/MakerMacros.h>
 DEFINE_FWK_MODULE(LowPtEleNtuplizer);
 
 #endif //LOWPTELENTUPLIZER_H
